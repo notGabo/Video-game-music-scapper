@@ -9,19 +9,6 @@ def main():
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
-    remplazoPalabras = {
-        "%20": " ",
-        "%2520": " ",
-        "%255B": "[",
-        "%255D": "]",
-        "%5B": "[",
-        "%5D": "]",
-        "%27": "'",
-        "%28": "(",
-        "%29": ")",
-        "%233": "#",
-        "%2527": "'",
-    }
     WAITTIME = 10  # segundos
     query = input("Ingrese el nombre del videojuego o banda sonora que desea buscar: ")
     htmlBusqueda = buscadorVideoGameMusic(query, headers)
@@ -75,8 +62,6 @@ def main():
                         continue
                     nombreArchivo = linkCancion.split("/")[-1]
                     nombreArchivo = decodearNombreCancion(nombreArchivo)
-                    # for clave, valor in remplazoPalabras.items():
-                    #     nombreArchivo = nombreArchivo.replace(clave, valor)
                     rutaGuardar = os.path.join(objetoAlbum['nombreCarpeta'], nombreArchivo)
                     print(f"Descargando {nombreArchivo}...")
                     exito = descargarRecurso(linkCancion, rutaGuardar, headers)
