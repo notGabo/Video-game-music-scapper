@@ -1,6 +1,7 @@
 import requests
 from time import sleep
 from bs4 import BeautifulSoup
+from urllib.parse import unquote
 import os
 # import dotenv
 # from dotenv import load_dotenv
@@ -10,7 +11,6 @@ import os
 
 def clearConsole():
     os.system('cls' if os.name == 'nt' else 'clear')
-
 
 def buscadorVideoGameMusic(query: str, headers: dict = None):
     query.replace(" ", "+")
@@ -32,7 +32,6 @@ def obtenerLinksDeAlbumes(html: str):
         link = fila.find('a')
         links.append(f"https://downloads.khinsider.com{link['href']}")
     return links
-
 
 def obtenerHTML(link: str, headers: dict):
     solicitud = requests.get(url=link, headers=headers)
@@ -124,11 +123,9 @@ def descargarRecurso(link: str, rutaGuardar: str, headers: dict):
     else:
         return False
 
-# print(linkDirecto(obtenerHTML("https://downloads.khinsider.com/game-soundtracks/album/cold-snap-2014/01.%2520Freedom.mp3", {
-#         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-#     })))
-
-# print(GenerarObjetoAlbum(obtenerHTML("https://downloads.khinsider.com/game-soundtracks/album/cold-snap-2014", {
-#         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-# #     })))
-#     })))
+def decodearNombreCancion(nombre:str):
+    """
+    Este metodo se encargara de decodificar el nombre de la cancion, ya que algunos caracteres pueden estar codificados.
+    Ej: %20 es un espacio, %5B es [, %5D es ], etc.
+    """
+    return unquote(nombre, encoding='utf-8', errors='replace').lstrip()

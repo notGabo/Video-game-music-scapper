@@ -2,7 +2,7 @@ import requests
 from time import sleep
 from bs4 import BeautifulSoup
 import os
-from funciones import clearConsole, buscadorVideoGameMusic, obtenerLinksDeAlbumes, obtenerHTML, GenerarObjetoAlbum, descargarRecurso, linkDirecto
+from funciones import clearConsole, buscadorVideoGameMusic, obtenerLinksDeAlbumes, obtenerHTML, GenerarObjetoAlbum, descargarRecurso, linkDirecto, decodearNombreCancion
 
 def main():
     # Constantes
@@ -74,8 +74,9 @@ def main():
                         print(f"No se encontro link de descarga para la cancion {linkCancion}, saltando descarga...")
                         continue
                     nombreArchivo = linkCancion.split("/")[-1]
-                    for clave, valor in remplazoPalabras.items():
-                        nombreArchivo = nombreArchivo.replace(clave, valor)
+                    nombreArchivo = decodearNombreCancion(nombreArchivo)
+                    # for clave, valor in remplazoPalabras.items():
+                    #     nombreArchivo = nombreArchivo.replace(clave, valor)
                     rutaGuardar = os.path.join(objetoAlbum['nombreCarpeta'], nombreArchivo)
                     print(f"Descargando {nombreArchivo}...")
                     exito = descargarRecurso(linkCancion, rutaGuardar, headers)
