@@ -5,16 +5,18 @@ import os
 
 def textoColor(texto, color):
     colores = {
-        0: "\033[93m", # naranja
-        1: "\033[91m", # rojo
+        -1: "\033[91m", # rojo
+        0: "\033[95m", # magenta
+        1: "\033[94m", # azul
         2: "\033[92m", # verde
         3: "\033[93m", # amarillo
-        4: "\033[94m", # azul
-        5: "\033[95m", # magenta
-        6: "\033[96m", # cian
+        4: "\033[96m", # cyan
+        5: "\033[90m", # gris
+        6: "\033[91m", # rojo claro
         7: "\033[97m", # blanco
-        8: "\033[90m", # gris
-        9: "\033[35m", # morado
+        8: "\033[38;5;208m", # naranja
+        9: "\033[38;5;201m", # rosa
+
     }
     if color not in colores:
         print(texto)
@@ -152,7 +154,7 @@ def hiloDescarga(WAITTIME: int, headers: dict, linksAlbumes: list, indiceAlbumes
         # Obtener el html del album seleccionado, en caso de que sea none, se saltara la descarga de ese album
         htmlAlbum = obtenerHTML(linksAlbumes[indiceAlbume], headers)
         if htmlAlbum is None:
-            textoColor(f"Error al obtener el album {linksAlbumes[indiceAlbume]}, saltando descarga...","rojo")
+            textoColor(f"Error al obtener el album {linksAlbumes[indiceAlbume]}, saltando descarga...",11)
             continue
         objetoAlbum = GenerarObjetoAlbum(htmlAlbum)
         textoColor(f"[{nombreHilo}] [{indiceAlbume + 1}/{len(indiceAlbumes)}] nombre album: {objetoAlbum['nombreAlbum']}",color)
@@ -176,13 +178,13 @@ def hiloDescarga(WAITTIME: int, headers: dict, linksAlbumes: list, indiceAlbumes
             # Obtener el html de la pagina de la cancion, en caso de que sea none, se saltara la descarga de esa cancion
             cargarPaginaCancion = obtenerHTML(linkCancion, headers)
             if cargarPaginaCancion is None:
-                textoColor(f"[{nombreHilo}] Error al cargar la pagina de la cancion {linkCancion}, saltando descarga...","rojo")
+                textoColor(f"[{nombreHilo}] Error al cargar la pagina de la cancion {linkCancion}, saltando descarga...",-1)
                 continue
 
             # En caso de que el link de descarga sea none, se saltara la descarga de esa cancion
             linkCancion = linkDirecto(cargarPaginaCancion)[0]
             if linkCancion is None:
-                textoColor(f"[{nombreHilo}] No se encontro link de descarga para la cancion {linkCancion}, saltando descarga...","rojo")
+                textoColor(f"[{nombreHilo}] No se encontro link de descarga para la cancion {linkCancion}, saltando descarga...",-1)
                 continue
             nombreArchivo = linkCancion.split("/")[-1]
             nombreArchivo = decodearNombreCancion(nombreArchivo)
@@ -193,6 +195,6 @@ def hiloDescarga(WAITTIME: int, headers: dict, linksAlbumes: list, indiceAlbumes
             if exito:
                 textoColor(f"[{nombreHilo}] {nombreArchivo} descargado correctamente.",color)
             else:
-                textoColor(f"[{nombreHilo}] Error al descargar {nombreArchivo}.","rojo")
+                textoColor(f"[{nombreHilo}] Error al descargar {nombreArchivo}.",-1)
             textoColor(f"[{nombreHilo}] Esperando {WAITTIME} segundos para la siguiente descarga y no saturar el servidor...",color)
     textoColor(f"[{nombreHilo}] Descarga del album {objetoAlbum['nombreAlbum']} completada.",color)

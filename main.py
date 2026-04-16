@@ -27,18 +27,18 @@ def main():
         indice = linksAlbumes.index(linkAlbum) + 1
         print(f"{indice}. {linkAlbum}")
     
-    # Control de errores para la seleccion de los albumes a descargar
     while True:
         threads = []
         eleccion = input("Ingrese el numero del album que desea descargar, si se desea descargar multiples albums se deben separar por coma. Ej: 1,2,3 (0 para salir): ")
         try:
+            # Control de errores para la seleccion de los albumes a descargar
             if eleccion == "0":
                 print("Saliendo del programa.")
                 break
+
             indiceAlbumes = [int(i) - 1 for i in eleccion.split(",")]
             for indice in indiceAlbumes:
                 nombreHilo = f"Hilo-{indice + 1}"
-                # Numero del 0 al 9 para elegir el color del hilo, se asignara un color diferente a cada hilo para diferenciar las descargas. Se utiliza el indice, si el indice es mayor a 9, se operara con el modulo para asignar un color dentro del rango de 0 a 9.
                 color = indice % 10 if indice % 10 in range(0, 10) else 10
                 thread = threading.Thread(target=hiloDescarga, args=(WAITTIME, headers, linksAlbumes, [indice], nombreHilo, color))
                 threads.append(thread)
@@ -46,12 +46,11 @@ def main():
             
             for t in threads:
                 t.start()
-                sleep(WAITTIME)
 
             for t in threads:
-                t.join()
-
-            
+                sleep(WAITTIME)
+                t.join() 
+                           
         except ValueError:
             textoColor(f"Entrada invalida, intente de nuevo.","rojo")
 

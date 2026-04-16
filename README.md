@@ -2,7 +2,7 @@
 
 Sorry 😔 i just wanted to download felt music\
 
-Please, only use this script if you want to download a complete discography from the artist. If you want to download a single or a specific song, use the [official page ](https://downloads.khinsider.com/)instead ;)
+Please, only use this script if you want to download a complete discography from the artist. If you want to download a single or a specific song, use the [official page](https://downloads.khinsider.com/) instead,
 
 ## Disclaimer
 
@@ -15,3 +15,6 @@ This tool is provided for personal use only. Users should:
 - Not use this software for any commercial purposes
 
 The author accepts no liability for misuse of this tool or any consequences thereof.
+
+## TODO LIST
+- integrate TUI to simplify the use
