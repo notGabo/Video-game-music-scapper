@@ -1,13 +1,27 @@
 import requests
-from time import sleep
 from bs4 import BeautifulSoup
 from urllib.parse import unquote
 import os
-# import dotenv
-# from dotenv import load_dotenv
 
-
-# dotenv.load_dotenv()
+def textoColor(texto, color):
+    colores = {
+        0: "\033[93m", # naranja
+        1: "\033[91m", # rojo
+        2: "\033[92m", # verde
+        3: "\033[93m", # amarillo
+        4: "\033[94m", # azul
+        5: "\033[95m", # magenta
+        6: "\033[96m", # cian
+        7: "\033[97m", # blanco
+        8: "\033[90m", # gris
+        9: "\033[35m", # morado
+    }
+    if color not in colores:
+        print(texto)
+        return
+    reinicio = "\033[0m"
+    colorSeleccionado = colores.get(color, "\033[0m")
+    print(f"{colorSeleccionado}{texto}{reinicio}")
 
 def clearConsole():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -90,7 +104,7 @@ def GenerarObjetoAlbum(html: str):
 
     # Conseguir links canciones
     tablaCanciones = soup.find('table', id='songlist')
-    tablaCanciones = tablaCanciones.find_all('tr')[1:]
+    tablaCanciones = tablaCanciones.find_all('tr')[1:-1]
 
     print(f"Cantidad de canciones en el album {nombreAlbum}: {len(tablaCanciones)}")
     for fila in tablaCanciones:
@@ -99,9 +113,10 @@ def GenerarObjetoAlbum(html: str):
             link = celdasCancion[0].find('a')['href']
             objetoAlbum["linksCanciones"].append(f"https://downloads.khinsider.com/{link}")
         except Exception as e:
+            print(f"Error al obtener el link de la cancion, saltando descarga... Error: {e}")
             contadorErrores += 1
             continue
-        objetoAlbum["anio"] = anio
+    objetoAlbum["anio"] = anio
     print(f"Se encontraron {contadorErrores} errores")
 
     objetoAlbum["nombreAlbum"] = nombreAlbum
@@ -129,3 +144,55 @@ def decodearNombreCancion(nombre:str):
     Ej: %20 es un espacio, %5B es [, %5D es ], etc.
     """
     return unquote(nombre, encoding='utf-8', errors='replace').lstrip()
+
+def hiloDescarga(WAITTIME: int, headers: dict, linksAlbumes: list, indiceAlbumes: list, nombreHilo: str = "", color: str = ""):
+    caracteresProhibidos = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
+    # Comienza ciclo de descarga
+    for indiceAlbume in indiceAlbumes:
+        # Obtener el html del album seleccionado, en caso de que sea none, se saltara la descarga de ese album
+        htmlAlbum = obtenerHTML(linksAlbumes[indiceAlbume], headers)
+        if htmlAlbum is None:
+            textoColor(f"Error al obtener el album {linksAlbumes[indiceAlbume]}, saltando descarga...","rojo")
+            continue
+        objetoAlbum = GenerarObjetoAlbum(htmlAlbum)
+        textoColor(f"[{nombreHilo}] [{indiceAlbume + 1}/{len(indiceAlbumes)}] nombre album: {objetoAlbum['nombreAlbum']}",color)
+        textoColor(f"[{nombreHilo}] cantidad de canciones: {len(objetoAlbum['linksCanciones'])}",color)
+        
+        # Crear carpeta del album, si ya existe se saltara este paso
+        if any(character in objetoAlbum['nombreCarpeta'] for character in caracteresProhibidos):
+            for character in caracteresProhibidos:
+                objetoAlbum['nombreCarpeta'] = objetoAlbum['nombreCarpeta'].replace(character, " ")
+        if not os.path.exists(objetoAlbum['nombreCarpeta']):
+            os.makedirs(objetoAlbum['nombreCarpeta'])
+        
+        # Descargar contenido del album
+        rutaCaratula = os.path.join(objetoAlbum['nombreCarpeta'], f"{objetoAlbum['nombreAlbum']}.png")
+        descargarRecurso(objetoAlbum['linkCaratula'], rutaCaratula, headers)
+    
+        # Descargar canciones del album
+        for linkCancion in objetoAlbum['linksCanciones']:
+            textoColor(f"[{nombreHilo}] [{objetoAlbum['linksCanciones'].index(linkCancion) + 1}/{len(objetoAlbum['linksCanciones'])}] Obteniendo link de descarga para la cancion {linkCancion}...", color)
+            
+            # Obtener el html de la pagina de la cancion, en caso de que sea none, se saltara la descarga de esa cancion
+            cargarPaginaCancion = obtenerHTML(linkCancion, headers)
+            if cargarPaginaCancion is None:
+                textoColor(f"[{nombreHilo}] Error al cargar la pagina de la cancion {linkCancion}, saltando descarga...","rojo")
+                continue
+
+            # En caso de que el link de descarga sea none, se saltara la descarga de esa cancion
+            linkCancion = linkDirecto(cargarPaginaCancion)[0]
+            if linkCancion is None:
+                textoColor(f"[{nombreHilo}] No se encontro link de descarga para la cancion {linkCancion}, saltando descarga...","rojo")
+                continue
+            nombreArchivo = linkCancion.split("/")[-1]
+            nombreArchivo = decodearNombreCancion(nombreArchivo)
+
+            # Ruta a guardar la cancion, se guardara dentro de la carpeta del album
+            rutaGuardar = os.path.join(objetoAlbum['nombreCarpeta'], nombreArchivo)
+            exito = descargarRecurso(linkCancion, rutaGuardar, headers)
+            if exito:
+                textoColor(f"[{nombreHilo}] {nombreArchivo} descargado correctamente.",color)
+            else:
+                textoColor(f"[{nombreHilo}] Error al descargar {nombreArchivo}.","rojo")
+            textoColor(f"[{nombreHilo}] Esperando {WAITTIME} segundos para la siguiente descarga y no saturar el servidor...",color)
+    textoColor(f"[{nombreHilo}] Descarga del album {objetoAlbum['nombreAlbum']} completada. en {WAITTIME} segundos se limpiara la consola.",color)

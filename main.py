@@ -1,85 +1,60 @@
-import requests
 from time import sleep
-from bs4 import BeautifulSoup
-import os
-from funciones import clearConsole, buscadorVideoGameMusic, obtenerLinksDeAlbumes, obtenerHTML, GenerarObjetoAlbum, descargarRecurso, linkDirecto, decodearNombreCancion
+from funciones import clearConsole, buscadorVideoGameMusic, obtenerLinksDeAlbumes, obtenerHTML, GenerarObjetoAlbum, descargarRecurso, linkDirecto, decodearNombreCancion, textoColor, hiloDescarga
+import threading
 
 def main():
+    clearConsole()
     # Constantes
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
-    WAITTIME = 10  # segundos
+    WAITTIME = 2
+
     query = input("Ingrese el nombre del videojuego o banda sonora que desea buscar: ")
     htmlBusqueda = buscadorVideoGameMusic(query, headers)
-    sleep(WAITTIME)
+
+    threads = []
+    
+    # En caso de que el html a retornar sea none, significa que hubo un error y retornara para que se cierre el programa 
     if htmlBusqueda is None:
         print("Error al realizar la busqueda.")
         return
+    
+    # Obtener los links de los albumes y mostrarlos para hacer la seleccion
     linksAlbumes = obtenerLinksDeAlbumes(htmlBusqueda)
     for linkAlbum in linksAlbumes:
         indice = linksAlbumes.index(linkAlbum) + 1
         print(f"{indice}. {linkAlbum}")
+    
+    # Control de errores para la seleccion de los albumes a descargar
     while True:
+        threads = []
+        eleccion = input("Ingrese el numero del album que desea descargar, si se desea descargar multiples albums se deben separar por coma. Ej: 1,2,3 (0 para salir): ")
         try:
-            eleccion = input("Ingrese el numero del album que desea descargar, si se desea descargar multiples albums se deben separar por coma. Ej: 1,2,3 (0 para salir): ")
             if eleccion == "0":
                 print("Saliendo del programa.")
                 break
-            indices = [int(i) - 1 for i in eleccion.split(",")]
-            clearConsole()
-            for indice in indices:
-                print(f"Descargando album {linksAlbumes[indice]}")
-                htmlAlbum = obtenerHTML(linksAlbumes[indice], headers)
-                if htmlAlbum is None:
-                    print(f"Error al obtener el album {linksAlbumes[indice]}")
-                    continue
-                objetoAlbum = GenerarObjetoAlbum(htmlAlbum)
-                print(f"nombre album: {objetoAlbum['nombreAlbum']}")
-                print(f"año: {objetoAlbum['anio']}")
-                print(f"link caratula: {objetoAlbum['linkCaratula']}")
-                print(f"nombre carpeta: {objetoAlbum['nombreCarpeta']}")
-                print(f"cantidad de canciones: {len(objetoAlbum['linksCanciones'])}")
-                print("-------------------")
-                # generar carpeta
-                print(f"Creando carpeta {objetoAlbum['nombreCarpeta']}")
-                if not os.path.exists(objetoAlbum['nombreCarpeta']):
-                    os.makedirs(objetoAlbum['nombreCarpeta'])
-                print("Descargando caratula...")
-                rutaCaratula = os.path.join(objetoAlbum['nombreCarpeta'], f"{objetoAlbum['nombreAlbum']}.jpg")
-                descargarRecurso(objetoAlbum['linkCaratula'], rutaCaratula, headers)
-                print("Esperando 5 segundos para iniciar las descargas de las canciones...")
+            indiceAlbumes = [int(i) - 1 for i in eleccion.split(",")]
+            for indice in indiceAlbumes:
+                nombreHilo = f"Hilo-{indice + 1}"
+                # Numero del 0 al 9 para elegir el color del hilo, se asignara un color diferente a cada hilo para diferenciar las descargas. Se utiliza el indice, si el indice es mayor a 9, se operara con el modulo para asignar un color dentro del rango de 0 a 9.
+                color = indice % 10 if indice % 10 in range(0, 10) else 10
+                thread = threading.Thread(target=hiloDescarga, args=(WAITTIME, headers, linksAlbumes, [indice], nombreHilo, color))
+                threads.append(thread)
+                
+            
+            for t in threads:
+                t.start()
                 sleep(WAITTIME)
-                print("Iniciando descargas, se preferiran archivos flac por sobre otros...")
-                for linkCancion in objetoAlbum['linksCanciones']:
-                    cargaPaginaCancion = obtenerHTML(linkCancion, headers)
-                    if cargaPaginaCancion is None:
-                        print(f"Error al cargar la pagina de la cancion {linkCancion}, saltando descarga...")
-                        continue
-                    linkCancion = linkDirecto(cargaPaginaCancion)[0]
-                    if linkCancion is None:
-                        print(f"No se encontro link de descarga para la cancion {linkCancion}, saltando descarga...")
-                        continue
-                    nombreArchivo = linkCancion.split("/")[-1]
-                    nombreArchivo = decodearNombreCancion(nombreArchivo)
-                    rutaGuardar = os.path.join(objetoAlbum['nombreCarpeta'], nombreArchivo)
-                    print(f"Descargando {nombreArchivo}...")
-                    exito = descargarRecurso(linkCancion, rutaGuardar, headers)
-                    if exito:
-                        print(f"{nombreArchivo} descargado correctamente.")
-                    else:
-                        print(f"Error al descargar {nombreArchivo}.")
-                    print("Esperando 5 segundos para la siguiente descarga y no saturar el servidor...")
-                    sleep(WAITTIME)
-            print("Descarga completada. en 5 segundos se limpiara la consola.")
-            sleep(WAITTIME)
-            clearConsole()
-            for linkAlbum in linksAlbumes:
-                indice = linksAlbumes.index(linkAlbum) + 1
-                print(f"{indice}. {linkAlbum}")
+
+            for t in threads:
+                t.join()
+
+            
         except ValueError:
-            print("Entrada invalida, intente de nuevo.")
-            continue
+            textoColor(f"Entrada invalida, intente de nuevo.","rojo")
+
+        
 
 if __name__ == "__main__":
     main()
