@@ -195,4 +195,4 @@ def hiloDescarga(WAITTIME: int, headers: dict, linksAlbumes: list, indiceAlbumes
             else:
                 textoColor(f"[{nombreHilo}] Error al descargar {nombreArchivo}.","rojo")
             textoColor(f"[{nombreHilo}] Esperando {WAITTIME} segundos para la siguiente descarga y no saturar el servidor...",color)
-    textoColor(f"[{nombreHilo}] Descarga del album {objetoAlbum['nombreAlbum']} completada. en {WAITTIME} segundos se limpiara la consola.",color)
+    textoColor(f"[{nombreHilo}] Descarga del album {objetoAlbum['nombreAlbum']} completada.",color)
