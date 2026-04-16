@@ -1,15 +1,16 @@
 from time import sleep
 from funciones import clearConsole, buscadorVideoGameMusic, obtenerLinksDeAlbumes, obtenerHTML, GenerarObjetoAlbum, descargarRecurso, linkDirecto, decodearNombreCancion, textoColor, hiloDescarga
 import threading
+from os import getenv
+from dotenv import load_dotenv
+
+load_dotenv("config.ini")
+
+WAITTIME = int(getenv("WAITTIME", 2))
+headers = eval(getenv("headers", "{}"))
 
 def main():
     clearConsole()
-    # Constantes
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-    }
-    WAITTIME = 2
-
     query = input("Ingrese el nombre del videojuego o banda sonora que desea buscar: ")
     htmlBusqueda = buscadorVideoGameMusic(query, headers)
 
